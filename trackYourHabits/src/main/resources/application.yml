@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: trackYourHabits
+  datasource:
+    url: jdbc:postgresql://localhost:5432/trackyourhabits
+    username: postgres
+    password: suicideleopard
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+jwt:
+  secret:
+    key: w3$thvux$tr1pclvb
+  lifetime: 60000
