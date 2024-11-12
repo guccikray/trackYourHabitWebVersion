@@ -1,11 +1,13 @@
 package com.guccikray.trackYourHabits.services;
 
+import com.guccikray.trackYourHabits.exceptions.HabitAlreadyMarkedAsCompletedTodayException;
 import com.guccikray.trackYourHabits.exceptions.HabitNotFoundException;
 import com.guccikray.trackYourHabits.habitEntity.HabitProgress;
 import com.guccikray.trackYourHabits.repositories.HabitProgressRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,10 +23,22 @@ public class HabitProgressService {
         this.habitProgressRepository = habitProgressRepository;
     }
 
-    public HabitProgress addHabitProgress(HabitProgress habitProgress,String userId) throws HabitNotFoundException {
-        if (!habitService.isHabitExists(habitProgress.getName(), UUID.fromString(userId))) {
+    public HabitProgress addHabitProgress(HabitProgress habitProgress,String userId) throws HabitNotFoundException,
+            HabitAlreadyMarkedAsCompletedTodayException {
+        if (!habitService.isHabitExists(habitProgress.getName(), userId)) {
             throw new HabitNotFoundException("Habit with this name doesn't exists");
         }
+        List<HabitProgress> allHabitProgress = habitProgressRepository.getByNameAndUserId(habitProgress.getName(),
+                UUID.fromString(userId));
+
+        boolean isHabitProgressWithThisDateExists = allHabitProgress.stream()
+                        .anyMatch(existedHabitProgress -> existedHabitProgress.getDateOfCompletion()
+                                .equals(LocalDate.now()));
+
+        if (isHabitProgressWithThisDateExists) {
+            throw new HabitAlreadyMarkedAsCompletedTodayException("Habit already mark as completed today");
+        }
+
         habitProgress.setUserId(UUID.fromString(userId));
         habitProgress.setCompleted(habitProgress.isCompleted());
 
@@ -32,7 +46,7 @@ public class HabitProgressService {
     }
 
     public List<HabitProgress> getAllHabitProgress(String name, String userId) throws HabitNotFoundException {
-        if (!habitService.isHabitExists(name, UUID.fromString(userId))) {
+        if (!habitService.isHabitExists(name, userId)) {
             throw new HabitNotFoundException("Habit with this name doesn't exists");
         }
 
@@ -40,7 +54,7 @@ public class HabitProgressService {
     }
 
     public long countCompletedDays(String name, String userId) throws HabitNotFoundException {
-        if (!habitService.isHabitExists(name, UUID.fromString(userId))) {
+        if (!habitService.isHabitExists(name, userId)) {
             throw new HabitNotFoundException("Habit with this name doesn't exists");
         }
 

@@ -7,6 +7,7 @@ import com.guccikray.trackYourHabits.repositories.HabitRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
@@ -18,12 +19,12 @@ public class HabitService {
         this.habitRepository = habitRepository;
     }
 
-    public boolean isHabitExists(String name, UUID userId) {
-        return habitRepository.existsByNameAndUserId(name, userId);
+    public boolean isHabitExists(String name, String userId) {
+        return habitRepository.existsByNameAndUserId(name, UUID.fromString(userId));
     }
 
     public Habit createHabit(Habit habit, String userId) throws HabitAlreadyExistsException {
-        if (isHabitExists(habit.getName(), UUID.fromString(userId))) {
+        if (isHabitExists(habit.getName(), userId)) {
             throw new HabitAlreadyExistsException("Habit with this name already exists");
         }
         habit.setUserId(UUID.fromString(userId));
@@ -49,5 +50,10 @@ public class HabitService {
                 .orElseThrow(() -> new HabitNotFoundException("Habit with this name doesn't exists"));
 
         habitRepository.delete(habit);
+    }
+
+    public Habit getHabitByNameAndUserId(String name, String userId) throws HabitNotFoundException {
+        return habitRepository.findByNameAndUserId(name, UUID.fromString(userId))
+                .orElseThrow(() -> new HabitNotFoundException("Habit with this name doesn't exists"));
     }
 }

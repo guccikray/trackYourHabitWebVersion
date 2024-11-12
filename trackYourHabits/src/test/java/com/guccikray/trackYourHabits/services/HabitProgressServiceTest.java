@@ -1,5 +1,6 @@
 package com.guccikray.trackYourHabits.services;
 
+import com.guccikray.trackYourHabits.exceptions.HabitAlreadyMarkedAsCompletedTodayException;
 import com.guccikray.trackYourHabits.exceptions.HabitNotFoundException;
 import com.guccikray.trackYourHabits.habitEntity.HabitProgress;
 import com.guccikray.trackYourHabits.repositories.HabitProgressRepository;
@@ -10,6 +11,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -33,22 +36,24 @@ public class HabitProgressServiceTest {
         String userId = "d2f1c9e7-88c9-4c68-89f9-cf8c8d9a6b0c";
         HabitProgress habitProgress = new HabitProgress("exercise", true);
 
-        when(habitService.isHabitExists(habitProgress.getName(), UUID.fromString(userId))).thenReturn(false);
+        when(habitService.isHabitExists(habitProgress.getName(), userId)).thenReturn(false);
 
         assertThatThrownBy(() -> habitProgressService.addHabitProgress(habitProgress, userId))
                 .isInstanceOf(HabitNotFoundException.class)
                 .hasMessage("Habit with this name doesn't exists");
 
         verify(habitService, times(1))
-                .isHabitExists(habitProgress.getName(), UUID.fromString(userId));
+                .isHabitExists(habitProgress.getName(), userId);
     }
 
+
     @Test
-    void addHabitProgressTest_returnsHabitProgress_whenHabitExists() throws HabitNotFoundException {
+    void addHabitProgressTest_returnsHabitProgress_whenHabitExists() throws HabitNotFoundException,
+            HabitAlreadyMarkedAsCompletedTodayException {
         String userId = "d2f1c9e7-88c9-4c68-89f9-cf8c8d9a6b0c";
         HabitProgress habitProgress = new HabitProgress("exercise", true);
 
-        when(habitService.isHabitExists(habitProgress.getName(), UUID.fromString(userId))).thenReturn(true);
+        when(habitService.isHabitExists(habitProgress.getName(), userId)).thenReturn(true);
         when(habitProgressRepository.save(habitProgress)).thenReturn(habitProgress);
 
         HabitProgress newHabitProgress = habitProgressService.addHabitProgress(habitProgress, userId);
@@ -57,7 +62,7 @@ public class HabitProgressServiceTest {
         assertThat(newHabitProgress.isCompleted()).isTrue();
 
         verify(habitService, times(1))
-                .isHabitExists(habitProgress.getName(), UUID.fromString(userId));
+                .isHabitExists(habitProgress.getName(), userId);
         verify(habitProgressRepository, times(1)).save(habitProgress);
     }
 
@@ -66,13 +71,13 @@ public class HabitProgressServiceTest {
         String name = "exercise";
         String userId = "d2f1c9e7-88c9-4c68-89f9-cf8c8d9a6b0c";
 
-        when(habitService.isHabitExists(name, UUID.fromString(userId))).thenReturn(false);
+        when(habitService.isHabitExists(name, userId)).thenReturn(false);
 
         assertThatThrownBy(() -> habitProgressService.getAllHabitProgress(name, userId))
                 .isInstanceOf(HabitNotFoundException.class)
                 .hasMessage("Habit with this name doesn't exists");
 
-        verify(habitService, times(1)).isHabitExists(name, UUID.fromString(userId));
+        verify(habitService, times(1)).isHabitExists(name, userId);
     }
 
     @Test
@@ -86,7 +91,7 @@ public class HabitProgressServiceTest {
         allHabitProgress.add(habitProgressIsCompleted);
         allHabitProgress.add(habitProgressIsNotCompleted);
 
-        when(habitService.isHabitExists(name, UUID.fromString(userId))).thenReturn(true);
+        when(habitService.isHabitExists(name, userId)).thenReturn(true);
         when(habitProgressRepository.getByNameAndUserId(name, UUID.fromString(userId))).thenReturn(allHabitProgress);
 
         List<HabitProgress> receivedAllHabitProgress = habitProgressService.getAllHabitProgress(name, userId);
@@ -97,7 +102,7 @@ public class HabitProgressServiceTest {
         assertThat(receivedAllHabitProgress.get(0).isCompleted()).isTrue();
         assertThat(receivedAllHabitProgress.get(1).isCompleted()).isFalse();
 
-        verify(habitService, times(1)).isHabitExists(name, UUID.fromString(userId));
+        verify(habitService, times(1)).isHabitExists(name, userId);
         verify(habitProgressRepository, times(1))
                 .getByNameAndUserId(name, UUID.fromString(userId));
     }

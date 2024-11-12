@@ -3,6 +3,7 @@ package com.guccikray.trackYourHabits.controllers;
 import com.guccikray.trackYourHabits.dto.HabitNameDto;
 import com.guccikray.trackYourHabits.dto.HabitProgressResponseDto;
 import com.guccikray.trackYourHabits.exceptions.HabitNotFoundException;
+import com.guccikray.trackYourHabits.exceptions.HabitAlreadyMarkedAsCompletedTodayException;
 import com.guccikray.trackYourHabits.habitEntity.HabitProgress;
 import com.guccikray.trackYourHabits.jwt.JwtUtil;
 import com.guccikray.trackYourHabits.services.HabitProgressService;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/habits")
@@ -36,8 +39,8 @@ public class HabitProgressController {
 
             return ResponseEntity.ok(new HabitProgressResponseDto(
                     habitProgressService.addHabitProgress(habitProgress, userId),
-                    "Habit created successfully"));
-        } catch (HabitNotFoundException e) {
+                    "Habit completion created successfully"));
+        } catch (HabitNotFoundException | HabitAlreadyMarkedAsCompletedTodayException e) {
             System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(new HabitProgressResponseDto(null, e.getMessage()));
